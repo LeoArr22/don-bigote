@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzería Don Bigote | Menú Interactivo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #d9381e;
+            --primary-hover: #b82a13;
+            --whatsapp: #25d366;
+            --whatsapp-hover: #1eb854;
+            --dark: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --text-light: #f5f5f5;
+            --text-muted: #aaaaaa;
+            --accent: #ffb703;
+            --font-main: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--dark);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* --- PANTALLA 1: SELECCIÓN DE SUCURSAL (TÓTEM) --- */
+        #branch-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #222 0%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        #branch-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-100%);
+        }
+
+        .totem-brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .totem-logo {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 25px rgba(255, 183, 3, 0.3);
+            margin-bottom: 15px;
+        }
+
+        .totem-brand h1 {
+            font-size: 2.2rem;
+            color: #fff;
+        }
+
+        .totem-brand p {
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .branch-cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .branch-totem-card {
+            background-color: var(--card-bg);
+            border: 2px solid #333;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .branch-totem-card:hover, .branch-totem-card:active {
+            border-color: var(--whatsapp);
+            background-color: #252525;
+            transform: scale(1.02);
+        }
+
+        .branch-icon {
+            background-color: rgba(37, 211, 102, 0.1);
+            color: var(--whatsapp);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .branch-info h3 { font-size: 1.2rem; color: #fff; }
+        .branch-info p { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* --- PANTALLA 2: MENÚ TÓTEM TÁCTIL --- */
+        #menu-screen {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        #menu-screen.active { display: block; }
+
+        .navbar {
+            background-color: #141414;
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-left { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--accent); object-fit: cover; }
+        .nav-title h2 { font-size: 1.2rem; color: #fff; line-height: 1; }
+        .nav-title span { font-size: 0.8rem; color: var(--whatsapp); font-weight: bold; }
+
+        .btn-change-branch {
+            background-color: #262626;
+            color: var(--text-muted);
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .categories-bar {
+            background-color: #181818;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            position: sticky;
+            top: 71px;
+            z-index: 90;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .cat-chip {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: 1px solid #3d3d3d;
+            padding: 10px 20px;
+            border-radius: 25px;
+            white-space: nowrap;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .cat-chip.active {
+            background-color: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .products-container {
+            padding: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid #2a2a2a;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card h3 { color: #fff; font-size: 1.1rem; margin-bottom: 6px; }
+        .card p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price { font-size: 1.3rem; font-weight: bold; color: var(--accent); }
+
+        .btn-add {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-add:hover { background-color: var(--primary-hover); }
+
+        /* CARRITO Y MODAL */
+        .cart-bar {
+            position: fixed;
+            bottom: -100px;
+            left: 0;
+            width: 100%;
+            background-color: #111;
+            border-top: 2px solid var(--whatsapp);
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            transition: bottom 0.3s ease;
+        }
+
+        .cart-bar.visible { bottom: 0; }
+        .cart-badge { background-color: var(--primary); padding: 8px 14px; border-radius: 20px; font-weight: bold; }
+        
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+            backdrop-filter: blur(4px);
+        }
+
+        .cart-modal.open { display: flex; }
+
+        .cart-modal-content {
+            background-color: #1a1a1a;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-top: 3px solid var(--accent);
+        }
+
+        .cart-item-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid #2a2a2a;
+        }
+
+        .btn-qty {
+            background-color: #333; color: #fff; border: 1px solid #555;
+            width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer;
+        }
+
+        .btn-wa-send {
+            background-color: var(--whatsapp); color: #fff; border: none;
+            padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        .btn-wa-send:hover { background-color: var(--whatsapp-hover); }
+    </style>
+</head>
+<body>
+
+    <!-- SUCURSALES (TÓTEM INICIAL) -->
+    <div id="branch-screen">
+        <div class="totem-brand">
+            <img src="assets/img/logo.jpg" alt="Logo Don Bigote" class="totem-logo" onerror="this.src='https://via.placeholder.com/110?text=Logo'">
+            <h1>Pizzería Don Bigote</h1>
+            <p>Elegí tu sucursal para pedir</p>
+        </div>
+
+        <div class="branch-cards-grid">
+            <div class="branch-totem-card" onclick="selectBranch('5491112345678', 'González Catán')">
+                <div class="branch-icon"><i class="fa-solid fa-store"></i></div>
+                <div class="branch-info">
+                    <h3>González Catán</h3>
+                    <p>S. Pérez 4597</p>
+                </div>
+            </div>
+
+            <div class="branch-totem-card" onclick="selectBranch('5491187654321', 'B. Independencia')">
+                <div class="branch-icon"><i class="fa-solid fa-store"></i></div>
+                <div class="branch-info">
+                    <h3>B. Independencia</h3>
+                    <p>J. Cobo 5078</p>
+                </div>
+            </div>
+
+            <div class="branch-totem-card" onclick="selectBranch('5491124672120', 'Rafael Castillo')">
+                <div class="branch-icon"><i class="fa-solid fa-store"></i></div>
+                <div class="branch-info">
+                    <h3>Rafael Castillo</h3>
+                    <p>Polledo 537</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENÚ INTERACTIVO TÓTEM -->
+    <div id="menu-screen">
+        <header class="navbar">
+            <div class="navbar-left">
+                <img src="assets/img/logo.jpg" alt="Logo" class="nav-logo" onerror="this.src='https://via.placeholder.com/45?text=Logo'">
+                <div class="nav-title">
+                    <h2>Don Bigote</h2>
+                    <span id="active-branch-label">Catán</span>
+                </div>
+            </div>
+            <button class="btn-change-branch" onclick="resetBranchSelection()"><i class="fa-solid fa-location-dot"></i> Cambiar</button>
+        </header>
+
+        <div class="categories-bar" id="categories-chips"></div>
+
+        <main class="products-container" id="products-container"></main>
+    </div>
+
+    <!-- CARRITO Y MODAL -->
+    <div id="cart-bar" class="cart-bar">
+        <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="toggleCartModal()">
+            <div class="cart-badge"><i class="fa-solid fa-basket-shopping"></i> <span id="cart-count">0</span></div>
+            <div>Total: <strong id="cart-total" style="color:var(--accent); font-size:1.1rem;">$0</strong></div>
+        </div>
+        <button class="btn-wa-send" onclick="sendOrderWhatsApp()">Pedir por WhatsApp <i class="fa-brands fa-whatsapp"></i></button>
+    </div>
+
+    <div id="cart-modal" class="cart-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="cart-modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                <h3 style="color:var(--accent);"><i class="fa-solid fa-cart-shopping"></i> Resumen de Pedido</h3>
+                <button onclick="toggleCartModal()" style="background:none; border:none; color:#aaa; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="cart-items-list"></div>
+            <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:15px;">
+                <h4>Total: <span id="modal-cart-total" style="color:var(--accent);">$0</span></h4>
+                <button class="btn-wa-send" onclick="sendOrderWhatsApp()">Confirmar <i class="fa-brands fa-whatsapp"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultProducts = [
+            { id: 1, name: "Muzzarella Clásica", category: "Pizzas", price: 8500, desc: "Salsa de tomate casera, muzzarella y aceitunas." },
+            { id: 2, name: "Fugazzeta Rellena", category: "Pizzas", price: 10500, desc: "Mucha cebolla, doble capa de muzzarella y jamón." },
+            { id: 3, name: "Napolitana Especial", category: "Pizzas", price: 9800, desc: "Muzzarella, rodajas de tomate fresco y ajo." },
+            { id: 4, name: "Calabresa", category: "Pizzas", price: 10000, desc: "Salsa de tomate, muzzarella y longaniza de primera." },
+            { id: 5, name: "Empanada de Carne", category: "Empanadas", price: 1000, desc: "Carne cortada a cuchillo, suave y jugosa." },
+            { id: 6, name: "Empanada Jamón y Queso", category: "Empanadas", price: 1000, desc: "Abundante muzzarella y jamón cocido." },
+            { id: 7, name: "Docena de Empanadas", category: "Empanadas", price: 11000, desc: "Elegí los gustos por WhatsApp." },
+            { id: 8, name: "Fainá Tradicional", category: "Extras", price: 1500, desc: "Porción individual dorada al horno." },
+            { id: 9, name: "Coca-Cola 1.5L", category: "Bebidas", price: 2500, desc: "Botella descartable bien fría." }
+        ];
+
+        let cart = [];
+        let selectedBranchPhone = "";
+        let selectedBranchName = "";
+        let currentCategory = "TODOS";
+
+        function getProducts() {
+            const saved = localStorage.getItem('don_bigote_menu');
+            if (!saved) return defaultProducts;
+            try {
+                const parsed = JSON.parse(saved);
+                return (Array.isArray(parsed) && parsed.length > 0) ? parsed : defaultProducts;
+            } catch (e) {
+                return defaultProducts;
+            }
+        }
+
+        function selectBranch(phone, name) {
+            selectedBranchPhone = phone;
+            selectedBranchName = name;
+            
+            document.getElementById('active-branch-label').innerText = name;
+            document.getElementById('branch-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.add('active');
+            
+            renderCategories();
+            renderProducts();
+        }
+
+        function resetBranchSelection() {
+            document.getElementById('branch-screen').classList.remove('hidden');
+            document.getElementById('menu-screen').classList.remove('active');
+        }
+
+        function renderCategories() {
+            const products = getProducts();
+            const categories = ["TODOS", ...new Set(products.map(p => p.category))];
+            
+            const container = document.getElementById('categories-chips');
+            container.innerHTML = categories.map(cat => `
+                <button class="cat-chip ${cat === currentCategory ? 'active' : ''}" onclick="filterCategory('${cat}', this)">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function filterCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('products-container');
+            const products = getProducts();
+            
+            const filtered = currentCategory === "TODOS" 
+                ? products 
+                : products.filter(p => p.category === currentCategory);
+
+            container.innerHTML = `
+                <div class="menu-grid">
+                    ${filtered.map(p => `
+                        <div class="card">
+                            <div>
+                                <h3>${p.name}</h3>
+                                <p>${p.desc}</p>
+                            </div>
+                            <div class="card-bottom">
+                                <span class="price">$${p.price.toLocaleString('es-AR')}</span>
+                                <button class="btn-add" onclick="addToCart(${p.id})"><i class="fa-solid fa-plus"></i> Agregar</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function addToCart(id) {
+            const products = getProducts();
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            const itemInCart = cart.find(i => i.id === id);
+            if (itemInCart) { itemInCart.qty++; } else { cart.push({ ...prod, qty: 1 }); }
+            updateCartUI();
+        }
+
+        function updateQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+            updateCartUI();
+        }
+
+        function removeItem(id) {
+            cart = cart.filter(i => i.id !== id);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartBar = document.getElementById('cart-bar');
+            const totalCount = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            if (totalCount > 0) {
+                cartBar.classList.add('visible');
+            } else {
+                cartBar.classList.remove('visible');
+                document.getElementById('cart-modal').classList.remove('open');
+            }
+
+            document.getElementById('cart-count').innerText = totalCount;
+            document.getElementById('cart-total').innerText = `$${totalPrice.toLocaleString('es-AR')}`;
+            document.getElementById('modal-cart-total').innerText = `$${totalPrice.toLocaleString('es-AR')}`;
+
+            const list = document.getElementById('cart-items-list');
+            if (cart.length === 0) {
+                list.innerHTML = `<p style="color:#aaa; text-align:center;">El carrito está vacío.</p>`;
+            } else {
+                list.innerHTML = cart.map(item => `
+                    <div class="cart-item-row">
+                        <div>
+                            <h4 style="color:#fff;">${item.name}</h4>
+                            <span style="color:#aaa; font-size:0.8rem;">$${item.price.toLocaleString('es-AR')} c/u</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="btn-qty" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                            <button onclick="removeItem(${item.id})" style="background:none; border:none; color:#e63946; margin-left:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleCartModal() {
+            if (cart.length > 0) document.getElementById('cart-modal').classList.toggle('open');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === 'cart-modal') toggleCartModal();
+        }
+
+        function sendOrderWhatsApp() {
+            if (cart.length === 0) return;
+            let text = `🍕 *NUEVO PEDIDO - DON BIGOTE*\n📍 *Sucursal:* ${selectedBranchName}\n---------------------------------\n`;
+            cart.forEach(i => { text += `• ${i.qty}x ${i.name} ($${(i.price * i.qty).toLocaleString('es-AR')})\n`; });
+            const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            text += `---------------------------------\n💰 *TOTAL:* $${total.toLocaleString('es-AR')}\n\n*Dirección / Aclaraciones:* `;
+            window.open(`https://wa.me/${selectedBranchPhone}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+    </script>
+</body>
+</html>

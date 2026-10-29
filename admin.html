@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin | Don Bigote</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #d9381e;
+            --whatsapp: #25d366;
+            --dark: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #ffb703;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--dark);
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+        }
+
+        .login-box {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .login-box h2 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        #admin-panel {
+            display: none;
+        }
+
+        #admin-panel.active {
+            display: block;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--accent); font-size: 1.8rem; }
+
+        .btn-view-site {
+            background-color: #333;
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            border: 1px solid #555;
+        }
+
+        .admin-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            margin-bottom: 25px;
+        }
+
+        .admin-card h2 {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-save {
+            background-color: var(--whatsapp);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .btn-save:hover { opacity: 0.9; }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .products-table th, .products-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .products-table th {
+            background-color: #282828;
+            color: var(--accent);
+        }
+
+        .price-input {
+            width: 100px;
+            padding: 6px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .btn-del {
+            background: none;
+            border: none;
+            color: #e63946;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .notice {
+            background-color: #1c3b2b;
+            color: var(--whatsapp);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .error-msg {
+            color: #e63946;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE ACCESO -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2><i class="fa-solid fa-lock"></i> Acceso Admin</h2>
+            <p style="color:#aaa; font-size:0.9rem; margin-bottom:15px;">Ingresá la contraseña para gestionar el menú.</p>
+            <input type="password" id="admin-pass" placeholder="Contraseña..." onkeypress="handleKeyPress(event)">
+            <button class="btn-save" onclick="checkPassword()">Ingresar</button>
+            <p id="error-msg" class="error-msg">Contraseña incorrecta.</p>
+        </div>
+    </div>
+
+    <!-- PANEL DE ADMINISTRACIÓN -->
+    <div id="admin-panel" class="container">
+        <header>
+            <h1><i class="fa-solid fa-pen-to-square"></i> Gestor - Don Bigote</h1>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a href="index.html" class="btn-view-site" target="_blank"><i class="fa-solid fa-eye"></i> Ver Menú</a>
+                <button onclick="logout()" style="background:none; border:none; color:#e63946; cursor:pointer; font-size:1.1rem;" title="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </header>
+
+        <div id="notice" class="notice">
+            <i class="fa-solid fa-check-circle"></i> ¡Cambios guardados con éxito!
+        </div>
+
+        <div class="admin-card">
+            <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Producto</h2>
+            <div class="form-grid">
+                <input type="text" id="new-name" placeholder="Nombre (ej: Pizza Napolitana)">
+                <select id="new-category">
+                    <option value="Pizzas">Pizzas</option>
+                    <option value="Empanadas">Empanadas</option>
+                    <option value="Extras">Extras</option>
+                    <option value="Bebidas">Bebidas</option>
+                </select>
+                <input type="number" id="new-price" placeholder="Precio ($)">
+            </div>
+            <input type="text" id="new-desc" placeholder="Descripción corta" style="margin-bottom: 15px;">
+            <button class="btn-save" onclick="addNewProduct()"><i class="fa-solid fa-plus"></i> Añadir a la Carta</button>
+        </div>
+
+        <div class="admin-card">
+            <h2><i class="fa-solid fa-list"></i> Modificar Precios Existentes</h2>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio ($)</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-products-list"></tbody>
+            </table>
+            <br>
+            <button class="btn-save" onclick="saveAllChanges()"><i class="fa-solid fa-floppy-disk"></i> Guardar Todos los Precios</button>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = "bigote2026"; 
+
+        // Misma lista base por defecto que usa el index.html
+        const defaultProducts = [
+            { id: 1, name: "Muzzarella Clásica", category: "Pizzas", price: 8500, desc: "Salsa de tomate casera, muzzarella y aceitunas." },
+            { id: 2, name: "Fugazzeta Rellena", category: "Pizzas", price: 10500, desc: "Mucha cebolla, doble capa de muzzarella y jamón." },
+            { id: 3, name: "Napolitana Especial", category: "Pizzas", price: 9800, desc: "Muzzarella, rodajas de tomate fresco y ajo." },
+            { id: 4, name: "Calabresa", category: "Pizzas", price: 10000, desc: "Salsa de tomate, muzzarella y longaniza de primera." },
+            { id: 5, name: "Empanada de Carne", category: "Empanadas", price: 1000, desc: "Carne cortada a cuchillo, suave y jugosa." },
+            { id: 6, name: "Empanada Jamón y Queso", category: "Empanadas", price: 1000, desc: "Abundante muzzarella y jamón cocido." },
+            { id: 7, name: "Docena de Empanadas", category: "Empanadas", price: 11000, desc: "Elegí los gustos por WhatsApp." },
+            { id: 8, name: "Fainá Tradicional", category: "Extras", price: 1500, desc: "Porción individual dorada al horno." },
+            { id: 9, name: "Coca-Cola 1.5L", category: "Bebidas", price: 2500, desc: "Botella descartable bien fría." }
+        ];
+
+        let products = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isAuth = sessionStorage.getItem('don_bigote_auth');
+            if (isAuth === 'true') {
+                unlockPanel();
+            }
+        });
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') { checkPassword(); }
+        }
+
+        function checkPassword() {
+            const inputPass = document.getElementById('admin-pass').value;
+            const errorMsg = document.getElementById('error-msg');
+
+            if (inputPass === ADMIN_PASSWORD) {
+                sessionStorage.setItem('don_bigote_auth', 'true');
+                unlockPanel();
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function unlockPanel() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').classList.add('active');
+            loadProducts();
+            renderAdminTable();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('don_bigote_auth');
+            location.reload();
+        }
+
+        // Función unificada para leer idéntico al index.html
+        function loadProducts() {
+            const saved = localStorage.getItem('don_bigote_menu');
+            if (!saved) {
+                products = defaultProducts;
+                return;
+            }
+            try {
+                const parsed = JSON.parse(saved);
+                products = (Array.isArray(parsed) && parsed.length > 0) ? parsed : defaultProducts;
+            } catch (e) {
+                products = defaultProducts;
+            }
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-products-list');
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td><strong>${p.name}</strong><br><small style="color:#aaa">${p.desc}</small></td>
+                    <td>${p.category}</td>
+                    <td>
+                        <input type="number" class="price-input" value="${p.price}" onchange="updateProductPrice(${p.id}, this.value)">
+                    </td>
+                    <td>
+                        <button class="btn-del" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateProductPrice(id, newPrice) {
+            const prod = products.find(p => p.id === id);
+            if (prod) { prod.price = parseInt(newPrice) || 0; }
+        }
+
+        function addNewProduct() {
+            const name = document.getElementById('new-name').value;
+            const category = document.getElementById('new-category').value;
+            const price = parseInt(document.getElementById('new-price').value);
+            const desc = document.getElementById('new-desc').value;
+
+            if (!name || isNaN(price)) {
+                alert("Por favor completá el nombre y precio.");
+                return;
+            }
+
+            products.push({
+                id: Date.now(),
+                name,
+                category,
+                price,
+                desc: desc || "Sin descripción"
+            });
+            saveAllChanges();
+
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-price').value = '';
+            document.getElementById('new-desc').value = '';
+        }
+
+        function deleteProduct(id) {
+            if (confirm("¿Seguro que querés eliminar este producto?")) {
+                products = products.filter(p => p.id !== id);
+                saveAllChanges();
+            }
+        }
+
+        function saveAllChanges() {
+            localStorage.setItem('don_bigote_menu', JSON.stringify(products));
+            renderAdminTable();
+            
+            const notice = document.getElementById('notice');
+            notice.style.display = 'block';
+            setTimeout(() => { notice.style.display = 'none'; }, 2500);
+        }
+    </script>
+</body>
+</html>
